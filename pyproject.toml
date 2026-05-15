@@ -66,6 +66,12 @@ dependencies = [
   Source = "https://github.com/facebookresearch/flowception"
   Tracker = "https://github.com/facebookresearch/flowception/issues"
 
+[project.scripts]
+flowception-rule-engine = "app_metadata.rule_engine:main"
+flowception-rule-api = "app_metadata.api_server:main"
+flowception-profile = "app_metadata.profile_generator:main"
+flowception-app-venv = "app_metadata.venv_bootstrap:main"
+
 [project.optional-dependencies]
     dev = [
         # Test
@@ -86,6 +92,9 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 namespaces = false
+
+[tool.setuptools.package-data]
+app_metadata = ["*.json"]
 
 [tool.ruff]
 line-length = 110

@@ -235,7 +235,7 @@ def evaluate_profile(
     )
 
 
-def _result_to_dict(result: EvaluationResult) -> dict[str, Any]:
+def result_to_dict(result: EvaluationResult) -> dict[str, Any]:
     return {
         "triggered_rules": result.triggered_rules,
         "blocked_rules": result.blocked_rules,
@@ -267,7 +267,7 @@ def main() -> int:
     profile = _load_json(profile_path)
 
     result = evaluate_profile(profile)
-    payload = _result_to_dict(result)
+    payload = result_to_dict(result)
 
     if args.output:
         out_path = Path(args.output)
