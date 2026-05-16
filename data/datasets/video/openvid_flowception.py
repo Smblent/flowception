@@ -1,9 +1,14 @@
-import os, numpy as np, tqdm, torch, pandas as pd
+import os
 from pathlib import Path
-from torch.utils.data import Dataset
-from engine.data_classes import Datapoint
+
+import numpy as np
+import pandas as pd
+import torch
 from decord import VideoReader, cpu
 from decord import bridge as decord_bridge
+from torch.utils.data import Dataset
+
+from engine.data_classes import Datapoint
 
 # Return torch tensors from decord (so we can .to(torch.float32))
 decord_bridge.set_bridge("torch")
@@ -100,7 +105,7 @@ class OpenVid1MFlowception(Dataset):
 
         target = min(T, max_valid)
         L = 1 if target <= 1 else 1 + ((target - 1) // ld) * ld
-        if L < min_valid_needed:
+        if min_valid_needed > L:
             L = min_valid_needed
 
         max_start = total - (L - 1) * s

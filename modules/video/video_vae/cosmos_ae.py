@@ -1,6 +1,7 @@
+from dataclasses import dataclass
+
 import torch
 import torch.nn as nn
-from dataclasses import dataclass
 from diffusers.utils import BaseOutput
 
 try:
@@ -72,6 +73,7 @@ class CosmosVAE(nn.Module):
 
 
 from dataclasses import dataclass
+
 from diffusers.utils import BaseOutput
 
 # ------------------ diffusers-style outputs ------------------

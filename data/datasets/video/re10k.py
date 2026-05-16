@@ -253,22 +253,21 @@
 
 
 # re10k_mp4_dataset.py
+import glob
 import os
 import random
-import glob
+
 import joblib
 import numpy as np
 import torch
 import torch.distributed as dist
-from torch.utils.data import Dataset
-
 from decord import VideoReader, cpu
 from decord import bridge as decord_bridge
+from torch.utils.data import Dataset
 
 decord_bridge.set_bridge("torch")  # return torch tensors from decord
 
 from engine.data_classes import Datapoint
-
 
 # -----------------------------
 # Helpers
@@ -491,7 +490,7 @@ class Re10kMP4DatasetFlowception(Dataset):  # supports dir scan or prebuilt .pt 
         # choose aligned L (≤ T and ≤ max_valid); ensure L ≥ min_valid_needed
         target = min(T, max_valid)
         L = 1 if target <= 1 else 1 + ((target - 1) // ld) * ld
-        if L < min_valid_needed:
+        if min_valid_needed > L:
             L = min_valid_needed
 
         # random start that fits L at stride s

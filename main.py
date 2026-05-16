@@ -9,13 +9,23 @@ from pathlib import Path
 
 import torch
 import torch._dynamo as dynamo
-import yaml
 from accelerate import Accelerator, FullyShardedDataParallelPlugin
 from accelerate.logging import get_logger
 from accelerate.utils import (
     InitProcessGroupKwargs,
     set_seed,
 )
+from torch.distributed.fsdp.fully_sharded_data_parallel import (
+    FullOptimStateDictConfig,
+    FullStateDictConfig,
+)
+from torch.distributed.fsdp.wrap import (
+    size_based_auto_wrap_policy,
+    transformer_auto_wrap_policy,
+)
+from torch.optim import Adam, AdamW
+from torch.utils.data import DataLoader
+
 from config.default import get_cfg_defaults
 from data.datasets.dataloader import ConcatDataloader, get_train_dataloader
 from data.datasets.dataset import get_all_datasets, get_extra_datasets
@@ -28,16 +38,6 @@ from helpers.utils import parse_ckpt
 from modules.conditioning import I2VConditioner, INConditioner
 from modules.get_model import get_denoiser
 from modules.vae import get_vae
-from torch.distributed.fsdp.fully_sharded_data_parallel import (
-    FullOptimStateDictConfig,
-    FullStateDictConfig,
-)
-from torch.distributed.fsdp.wrap import (
-    size_based_auto_wrap_policy,
-    transformer_auto_wrap_policy,
-)
-from torch.optim import Adam, AdamW
-from torch.utils.data import DataLoader
 
 dynamo.config.cache_size_limit = 64
 
@@ -291,9 +291,11 @@ def setup_fsdp(cfg, model, ema, conditioner, accelerator, logger):
     """Wrap model, EMA, and optionally conditioner in FSDP."""
     from torch.distributed.fsdp import (
         BackwardPrefetch,
-        FullyShardedDataParallel as FSDP,
         MixedPrecision,
         ShardingStrategy,
+    )
+    from torch.distributed.fsdp import (
+        FullyShardedDataParallel as FSDP,
     )
 
     if hasattr(model, "ltx") and hasattr(model.ltx, "transformer_blocks"):

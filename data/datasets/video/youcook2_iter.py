@@ -1,11 +1,14 @@
-import os, json, random, math
+import json
+import os
+import random
+from collections import OrderedDict
+
 import joblib
 import numpy as np
 import torch
-from torch.utils.data import IterableDataset, get_worker_info
-from collections import OrderedDict
 from decord import VideoReader, cpu, gpu
 from decord import bridge as decord_bridge
+from torch.utils.data import IterableDataset, get_worker_info
 
 decord_bridge.set_bridge("torch")
 
@@ -64,7 +67,7 @@ class YouCook2IterFlowception(IterableDataset):
             if annotations.endswith((".pt", ".pkl", ".joblib")):
                 annotations = joblib.load(annotations)
             elif annotations.endswith(".json"):
-                with open(annotations, "r", encoding="utf-8") as f:
+                with open(annotations, encoding="utf-8") as f:
                     annotations = json.load(f)
             else:
                 raise ValueError(f"Unsupported annotations file: {annotations}")

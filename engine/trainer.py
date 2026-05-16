@@ -13,12 +13,12 @@ import numpy as np
 import torch
 import tqdm
 from accelerate.utils import save_fsdp_model
+from PIL import Image
+from torch.profiler import ProfilerActivity, profile
+
 from data.datasets.dataloader import ConcatDataloader
 from helpers.checkpoint import get_fsdp_ckpt_kwargs
 from helpers.ema import update_ema
-from PIL import Image
-from torch.profiler import profile, ProfilerActivity
-
 
 # Global flag for preemption detection
 PREEMPTION_FLAG = {"flag": False}

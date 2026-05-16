@@ -231,13 +231,18 @@
 #         return self._fetch_one()
 
 
-import os, csv, math, random
+import csv
+import math
+import os
+import random
+
 import numpy as np
 import torch
-from torch.utils.data import Dataset
-from engine.data_classes import Datapoint
 from decord import VideoReader, cpu
 from decord import bridge as decord_bridge
+from torch.utils.data import Dataset
+
+from engine.data_classes import Datapoint
 
 decord_bridge.set_bridge("torch")
 
@@ -289,7 +294,7 @@ class KineticsDatasetFlowception(Dataset):
 
         # Fast CSV ingest only
         rows = []
-        with open(csv_path, "r", newline="") as f:
+        with open(csv_path, newline="") as f:
             rdr = csv.DictReader(f)
             for r in rdr:
                 if split and r.get("split", "").strip().lower() != split:
@@ -357,7 +362,7 @@ class KineticsDatasetFlowception(Dataset):
 
         target = min(T, max_valid)
         L = 1 if target <= 1 else 1 + ((target - 1) // ld) * ld
-        if L < min_valid_needed:
+        if min_valid_needed > L:
             L = min_valid_needed
 
         max_start = total - (L - 1) * s

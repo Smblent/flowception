@@ -1,22 +1,22 @@
 import math
 import warnings
-from functools import partial
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as cp
-
 from einops import rearrange
 
 try:
     from modules.size_embed import JointTimestepEmbedderND
 except (ImportError, ModuleNotFoundError):
     JointTimestepEmbedderND = None  # not used by FlowceptionV1
+
+
 from modules.video.video_modules.depth_modules import (
+    FusedRMSNorm,
     PixelShuffle3d,
     PixelUnshuffle3d,
-    FusedRMSNorm,
     RMSNorm,
 )  # , modulate
 from modules.video.video_modules.video_rope import (
@@ -24,16 +24,6 @@ from modules.video.video_modules.video_rope import (
     apply_multimodal_rotary_pos_emb,
     generate_position_ids,
 )
-from timm.models.vision_transformer import Mlp
-
-from einops import rearrange, repeat
-from collections import defaultdict
-from functools import partial
-
-import numpy as np
-import torch
-from torch import nn, einsum
-import torch.nn.functional as F
 
 
 def modulate(x, shift, scale):

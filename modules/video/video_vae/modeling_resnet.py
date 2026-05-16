@@ -1,15 +1,13 @@
-from functools import partial
-from typing import Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from einops import rearrange
 from diffusers.models.activations import get_activation
 from diffusers.models.attention_processor import SpatialNorm
-from diffusers.models.lora import LoRACompatibleConv, LoRACompatibleLinear
 from diffusers.models.normalization import AdaGroupNorm
-from timm.models.layers import drop_path, to_2tuple, trunc_normal_
+from einops import rearrange
+from timm.models.layers import trunc_normal_
+
 from .modeling_causal_conv import CausalConv3d, CausalGroupNorm
 
 
@@ -48,20 +46,20 @@ class CausalResnetBlock3D(nn.Module):
         self,
         *,
         in_channels: int,
-        out_channels: Optional[int] = None,
+        out_channels: int | None = None,
         conv_shortcut: bool = False,
         dropout: float = 0.0,
         temb_channels: int = 512,
         groups: int = 32,
-        groups_out: Optional[int] = None,
+        groups_out: int | None = None,
         pre_norm: bool = True,
         eps: float = 1e-6,
         non_linearity: str = "swish",
         time_embedding_norm: str = "default",  # default, scale_shift, ada_group, spatial
         output_scale_factor: float = 1.0,
-        use_in_shortcut: Optional[bool] = None,
+        use_in_shortcut: bool | None = None,
         conv_shortcut_bias: bool = True,
-        conv_2d_out_channels: Optional[int] = None,
+        conv_2d_out_channels: int | None = None,
     ):
         super().__init__()
         self.pre_norm = pre_norm
@@ -73,7 +71,6 @@ class CausalResnetBlock3D(nn.Module):
         self.output_scale_factor = output_scale_factor
         self.time_embedding_norm = time_embedding_norm
 
-        linear_cls = nn.Linear
 
         if groups_out is None:
             groups_out = groups
@@ -191,20 +188,20 @@ class ResnetBlock2D(nn.Module):
         self,
         *,
         in_channels: int,
-        out_channels: Optional[int] = None,
+        out_channels: int | None = None,
         conv_shortcut: bool = False,
         dropout: float = 0.0,
         temb_channels: int = 512,
         groups: int = 32,
-        groups_out: Optional[int] = None,
+        groups_out: int | None = None,
         pre_norm: bool = True,
         eps: float = 1e-6,
         non_linearity: str = "swish",
         time_embedding_norm: str = "default",  # default, scale_shift, ada_group, spatial
         output_scale_factor: float = 1.0,
-        use_in_shortcut: Optional[bool] = None,
+        use_in_shortcut: bool | None = None,
         conv_shortcut_bias: bool = True,
-        conv_2d_out_channels: Optional[int] = None,
+        conv_2d_out_channels: int | None = None,
     ):
         super().__init__()
         self.pre_norm = pre_norm
@@ -216,7 +213,6 @@ class ResnetBlock2D(nn.Module):
         self.output_scale_factor = output_scale_factor
         self.time_embedding_norm = time_embedding_norm
 
-        linear_cls = nn.Linear
         conv_cls = nn.Conv3d
 
         if groups_out is None:
@@ -318,7 +314,7 @@ class CausalDownsample2x(nn.Module):
         self,
         channels: int,
         use_conv: bool = True,
-        out_channels: Optional[int] = None,
+        out_channels: int | None = None,
         name: str = "conv",
         kernel_size=3,
         bias=True,
@@ -368,7 +364,7 @@ class Downsample2D(nn.Module):
         self,
         channels: int,
         use_conv: bool = True,
-        out_channels: Optional[int] = None,
+        out_channels: int | None = None,
         padding: int = 0,
         name: str = "conv",
         kernel_size=3,
@@ -432,7 +428,7 @@ class TemporalDownsample2x(nn.Module):
         self,
         channels: int,
         use_conv: bool = False,
-        out_channels: Optional[int] = None,
+        out_channels: int | None = None,
         padding: int = 0,
         kernel_size=3,
         bias=True,
@@ -497,7 +493,7 @@ class CausalTemporalDownsample2x(nn.Module):
         self,
         channels: int,
         use_conv: bool = False,
-        out_channels: Optional[int] = None,
+        out_channels: int | None = None,
         kernel_size=3,
         bias=True,
     ):
@@ -507,7 +503,6 @@ class CausalTemporalDownsample2x(nn.Module):
         self.use_conv = use_conv
         stride = (2, 1, 1)
 
-        conv_cls = nn.Conv3d
 
         if use_conv:
             conv = CausalConv3d(
@@ -544,9 +539,9 @@ class Upsample2D(nn.Module):
         self,
         channels: int,
         use_conv: bool = False,
-        out_channels: Optional[int] = None,
+        out_channels: int | None = None,
         name: str = "conv",
-        kernel_size: Optional[int] = None,
+        kernel_size: int | None = None,
         padding=1,
         bias=True,
         interpolate=False,
@@ -611,9 +606,9 @@ class CausalUpsample2x(nn.Module):
         self,
         channels: int,
         use_conv: bool = False,
-        out_channels: Optional[int] = None,
+        out_channels: int | None = None,
         name: str = "conv",
-        kernel_size: Optional[int] = 3,
+        kernel_size: int | None = 3,
         bias=True,
         interpolate=False,
     ):
@@ -664,8 +659,8 @@ class TemporalUpsample2x(nn.Module):
         self,
         channels: int,
         use_conv: bool = True,
-        out_channels: Optional[int] = None,
-        kernel_size: Optional[int] = None,
+        out_channels: int | None = None,
+        kernel_size: int | None = None,
         padding=1,
         bias=True,
         interpolate=False,
@@ -724,8 +719,8 @@ class CausalTemporalUpsample2x(nn.Module):
         self,
         channels: int,
         use_conv: bool = True,
-        out_channels: Optional[int] = None,
-        kernel_size: Optional[int] = 3,
+        out_channels: int | None = None,
+        kernel_size: int | None = 3,
         bias=True,
         interpolate=False,
     ):
@@ -753,7 +748,7 @@ class CausalTemporalUpsample2x(nn.Module):
         temporal_chunk=False,
     ) -> torch.FloatTensor:
         assert hidden_states.shape[1] == self.channels
-        t = hidden_states.shape[2]
+        hidden_states.shape[2]
         hidden_states = self.conv(hidden_states, is_init_image=is_init_image, temporal_chunk=temporal_chunk)
         hidden_states = rearrange(hidden_states, "b (c p) t h w -> b c (t p) h w", p=2)
 

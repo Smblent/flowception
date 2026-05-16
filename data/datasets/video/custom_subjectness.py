@@ -1,9 +1,14 @@
-import os, joblib, numpy as np, tqdm, torch
-from torch.utils.data import Dataset
-from typing import Optional
-from engine.data_classes import Datapoint
+import os
+
+import joblib
+import numpy as np
+import torch
+import tqdm
 from decord import VideoReader, cpu
 from decord import bridge as decord_bridge
+from torch.utils.data import Dataset
+
+from engine.data_classes import Datapoint
 
 # Return torch tensors from decord (so we can .to(torch.float32))
 decord_bridge.set_bridge("torch")
@@ -11,14 +16,14 @@ decord_bridge.set_bridge("torch")
 
 def _passes_subjectness_filters(
     entry: dict,
-    min_subjectness: Optional[float],
-    min_size_ratio: Optional[float],
-    max_size_ratio: Optional[float],
+    min_subjectness: float | None,
+    min_size_ratio: float | None,
+    max_size_ratio: float | None,
 ) -> bool:
     if min_subjectness is None and min_size_ratio is None and max_size_ratio is None:
         return True  # no subjectness-based filtering requested
 
-    sd = entry.get("subjectness", None)  # your out_key name
+    sd = entry.get("subjectness")  # your out_key name
     if not isinstance(sd, dict):
         return False  # need the dict present to evaluate thresholds
 
@@ -195,7 +200,7 @@ class CustomSubjectnessFlowception(Dataset):
         # Choose target frames (≤ T and ≤ max_valid), then ALIGN: L = 1 + q*ld
         target = min(T, max_valid)
         L = 1 if target <= 1 else 1 + ((target - 1) // ld) * ld
-        if L < min_valid_needed:
+        if min_valid_needed > L:
             L = min_valid_needed
 
         # Choose a random start that fits exactly L frames at stride s

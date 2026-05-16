@@ -308,7 +308,6 @@ class Denoiser(nn.Module):
                 for i in range(self.e_att_start, self.e_att_end):
                     n.blocks[i].attn.use_e_att = True
 
-            cu = cond2 if self.use_e_att else null_cond2
             xu = n(input1, timestep=c_noise, context_frames=context_frames, **null_cond2)
             xb = n(input1, timestep=c_noise, context_frames=blurred_context, **null_cond2)
             for i in range(len(n.blocks)):
@@ -325,7 +324,6 @@ class Denoiser(nn.Module):
                 for i in range(self.e_att_start, self.e_att_end):
                     n.blocks[i].attn.use_e_att = True
 
-            cu = cond2 if self.use_e_att else null_cond2
             xu = n(input1, timestep=c_noise, context_frames=context_frames, **null_cond2)
 
             novit_cond = deepcopy(cond2)
@@ -507,7 +505,6 @@ class Denoiser(nn.Module):
                                 n.blocks[i].attn.use_e_att = True
                                 # network.blocks[i].attn.step_size=lr
                                 # network.blocks[i].attn.num_steps=steps
-                        cu = cond2 if self.use_e_att else null_cond2
                         xu = n(
                             input1,
                             timestep=c_noise,
@@ -531,7 +528,6 @@ class Denoiser(nn.Module):
                             for i in range(self.e_att_start, self.e_att_end):
                                 n.blocks[i].attn.use_e_att = True
 
-                        cu = cond2 if self.use_e_att else null_cond2
                         xu = n(
                             input1,
                             timestep=c_noise,
@@ -630,7 +626,6 @@ class Denoiser(nn.Module):
                             n.blocks[i].attn.use_e_att = True
                             # network.blocks[i].attn.step_size=lr
                             # network.blocks[i].attn.num_steps=steps
-                    cu = cond2 if self.use_e_att else null_cond2
                     xu = n(
                         input1,
                         timestep=c_noise,
@@ -667,7 +662,7 @@ class Denoiser(nn.Module):
                         velocity = velocity + self.class_w * scaling * grads
 
         if self.inpaint_mask is not None and self.inpaint_latent is not None and c_noise.mean() < 1.0:
-            x0 = input1 + (1 - t) * velocity
+            input1 + (1 - t) * velocity
             eps = input - t * velocity
 
             assert self.inpaint_latent.shape == self.inpaint_mask.shape
@@ -795,7 +790,7 @@ class Denoiser(nn.Module):
 
                     if self.use_sag and c_noise.mean() > self.seg_tmin:
                         blur_sigma = 3
-                        kernel_size = math.ceil(6 * blur_sigma) + 1 - math.ceil(6 * blur_sigma) % 2
+                        math.ceil(6 * blur_sigma) + 1 - math.ceil(6 * blur_sigma) % 2
 
                         # smooth_inp = gaussian_blur_2d(input1, kernel_size=kernel_size, sigma=blur_sigma)
                         # blur x0_hat
@@ -864,7 +859,6 @@ class Denoiser(nn.Module):
                             n.blocks[i].attn.use_e_att = True
                             # network.blocks[i].attn.step_size=lr
                             # network.blocks[i].attn.num_steps=steps
-                    cu = cond2 if self.use_e_att else null_cond2
                     xu = n(
                         input1,
                         timestep=c_noise,
@@ -956,7 +950,6 @@ class Denoiser(nn.Module):
                             n.blocks[i].attn.use_e_att = True
                             # network.blocks[i].attn.step_size=lr
                             # network.blocks[i].attn.num_steps=steps
-                    cu = cond2 if self.use_e_att else null_cond2
                     xu = n(
                         input1,
                         timestep=c_noise,
@@ -991,7 +984,7 @@ class Denoiser(nn.Module):
                         velocity = velocity + self.class_w * scaling * grads
 
         if inpaint_mask is not None and inpaint_latent is not None and c_noise.mean() < 1.0:
-            x0 = input1 + (1 - t) * velocity
+            input1 + (1 - t) * velocity
             eps = input - t * velocity
 
             assert inpaint_latent.shape == inpaint_mask.shape

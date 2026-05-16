@@ -8,8 +8,8 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from helpers.utils import pil_loader_v2_blur
 from engine.data_classes import Datapoint
+from helpers.utils import pil_loader_v2_blur
 
 
 def get_indexor(choice, ratio):

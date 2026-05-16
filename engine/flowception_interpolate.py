@@ -1,4 +1,3 @@
-import gc
 import json
 import os
 import time
@@ -8,32 +7,26 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import tqdm
-import wandb
 from accelerate.utils import save_fsdp_model
-from helpers.checkpoint import get_fsdp_ckpt_kwargs
 from einops import rearrange
+from torch.distributions import Beta
 
 from engine.data_classes import TrainTuple
 from engine.trainer import Trainer
 from engine.utils import (
-    append_dims,
-    vae_accepts_latent_mask,
-    randomly_select_slice,
-    get_ema_loss_heatmap_to_wandb,
-    update_ema_loss_bins,
-    sample_tau_g_edge_equalized,
-    logit_normal_weight,
-    scale_snr,
-    downsample_video,
     GPUBatchVideoAug,
+    append_dims,
+    downsample_video,
+    scale_snr,
+    vae_accepts_latent_mask,
 )
-from torch.distributions import Beta
+from helpers.checkpoint import get_fsdp_ckpt_kwargs
 from helpers.video_utils.visualization import frames_to_gif, write_frames_ffmpeg
 from modules.diffusion.denoiser import build_denoiser_wrapper
 from modules.diffusion.denoiser_scaling import CondOTScaling
 from modules.diffusion.sigma_sampling import CondOTUniformDiscretization
-from modules.flowception.align import compute_insert_counts, left_align_by_mask, left_align_frames
-from modules.flowception.helpers import sample_start_frames_interp, pick_latents_after_skip
+from modules.flowception.align import compute_insert_counts, left_align_by_mask
+from modules.flowception.helpers import pick_latents_after_skip, sample_start_frames_interp
 from modules.flowception.losses import poisson_loss
 from modules.flowception.sampling import vanilla_sample_interp_flowception
 from modules.flowception.schedulers import get_kappa_scheduler
@@ -438,8 +431,8 @@ class FlowceptionInterpolate(Trainer):
     def get_flowception_loss(self, Y1, M1, vid_lengths, cond_t, context_frames):
         t_flowception_start = time.time()
 
-        batch_size = Y1.shape[0]
-        num_frames = Y1.shape[1]
+        Y1.shape[0]
+        Y1.shape[1]
         device = self.accelerator.device
 
         Y0 = torch.randn_like(Y1)
@@ -754,9 +747,7 @@ class FlowceptionInterpolate(Trainer):
                     f"[Rank {self.accelerator.process_index}] Detected NaN, saving crash data"
                 )
 
-                crash_dir = Path(self.results_folder) / "crash_data_rank{}".format(
-                    self.accelerator.process_index
-                )
+                crash_dir = Path(self.results_folder) / f"crash_data_rank{self.accelerator.process_index}"
                 os.makedirs(crash_dir, exist_ok=True)
 
                 torch.save(batch, crash_dir / "batch.pt")
@@ -856,7 +847,6 @@ class FlowceptionInterpolate(Trainer):
         self.accelerator.wait_for_everyone()
 
         batch_size = self.batch_size
-        latent_depth = self.latent_depth
 
         grid_latents = []
         grid_masks = []
@@ -1137,7 +1127,7 @@ class FlowceptionInterpolate(Trainer):
             B, C, T_gt, H, W = img_gt.shape
 
             c = batch.condition["class_id"]
-            cond2 = batch.condition["crop_coords"].to(device, non_blocking=True)
+            batch.condition["crop_coords"].to(device, non_blocking=True)
             cond_ids = c.to(device, torch.long, non_blocking=True) if isinstance(c, torch.Tensor) else c
 
             if isinstance(cond_ids, torch.Tensor):
@@ -1191,7 +1181,7 @@ class FlowceptionInterpolate(Trainer):
                 latent_mask = latent_mask[..., 0]
             latent_mask = latent_mask.to(torch.bool).to(Y_t.device)
 
-            tcr = getattr(self.vae, "temporal_compression_ratio", self.temporal_factor)
+            getattr(self.vae, "temporal_compression_ratio", self.temporal_factor)
 
             accepts_mask = vae_accepts_latent_mask(self.vae)
 

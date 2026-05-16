@@ -1,5 +1,5 @@
-import torch, tqdm
-import torch.nn.functional as F
+import torch
+import tqdm
 
 
 @torch.inference_mode()
@@ -479,7 +479,7 @@ def vanilla_sample_flowception_t2v(
     insert_time_map[M_t] = 0.0
 
     Y_T_list, M_t_list = [], []
-    total_inserts = torch.zeros(B, device=device, dtype=torch.float32)
+    torch.zeros(B, device=device, dtype=torch.float32)
     all_expected_lengths = []
 
     # context always empty in your current usage
@@ -569,7 +569,7 @@ def vanilla_sample_flowception_t2v(
 
                 # frames to insert (per-sample padded to Imax)
                 inserting_frames = torch.randn((B, Imax, H, W, C), device=device, dtype=Y_t.dtype)
-                inserting_mask = (
+                (
                     torch.arange(Imax, device=device)[None, :] < num_insertions[:, None]
                 )  # [B,Imax]
 
@@ -1228,7 +1228,7 @@ def vanilla_sample_flow_only_fullseq(
     Y_t[:, :K] = first_frames[:, :K]
 
     # init remaining frames with noise (fixed length, no growth)
-    if K < input_length:
+    if input_length > K:
         Y_t[:, K:] = torch.randn_like(Y_t[:, K:])
 
     # per-position time and step
@@ -1282,7 +1282,7 @@ def vanilla_sample_flow_only_fullseq(
             vel = vel * s_text + vel_u * (1.0 - s_text)
 
         # update only non-context frames (keep first K frozen)
-        if K < input_length:
+        if input_length > K:
             Y_t[:, K:] = Y_t[:, K:] + dt[:, K:, None, None, None] * vel[:, K:]
 
         t = (t + dt).clamp(max=1.0)
@@ -1384,7 +1384,7 @@ def vanilla_sample_flow_only_fullseq_t2v(
             vel = vel * s_text + vel_u * (1.0 - s_text)
 
         # update only non-context frames (keep first K frozen)
-        if K < input_length:
+        if input_length > K:
             Y_t[:, K:] = Y_t[:, K:] + dt[:, K:, None, None, None] * vel[:, K:]
 
         t = (t + dt).clamp(max=1.0)

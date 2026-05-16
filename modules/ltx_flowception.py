@@ -28,26 +28,14 @@ import inspect
 import logging
 import math
 from enum import Enum
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
-from huggingface_hub import snapshot_download
-
 import torch
 import torch.nn as nn
-
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.loaders import FromOriginalModelMixin, PeftAdapterMixin
-from diffusers.utils import (
-    USE_PEFT_BACKEND,
-    deprecate,
-    is_torch_version,
-    logging,
-    scale_lora_layers,
-    unscale_lora_layers,
-)
-from diffusers.utils.torch_utils import maybe_allow_in_graph
 from diffusers.models._modeling_parallel import ContextParallelInput, ContextParallelOutput
 from diffusers.models.attention import AttentionMixin, AttentionModuleMixin, FeedForward
 from diffusers.models.attention_dispatch import dispatch_attention_fn
@@ -56,7 +44,15 @@ from diffusers.models.embeddings import PixArtAlphaTextProjection
 from diffusers.models.modeling_outputs import Transformer2DModelOutput
 from diffusers.models.modeling_utils import ModelMixin
 from diffusers.models.normalization import AdaLayerNormSingle, RMSNorm
-
+from diffusers.utils import (
+    USE_PEFT_BACKEND,
+    is_torch_version,
+    logging,
+    scale_lora_layers,
+    unscale_lora_layers,
+)
+from diffusers.utils.torch_utils import maybe_allow_in_graph
+from huggingface_hub import snapshot_download
 
 logger = logging.get_logger(__name__)
 
@@ -206,9 +202,9 @@ class LTXVideoAttnProcessor:
         self,
         attn: "LTXAttention",
         hidden_states: torch.Tensor,
-        encoder_hidden_states: Optional[torch.Tensor] = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        image_rotary_emb: Optional[torch.Tensor] = None,
+        encoder_hidden_states: torch.Tensor | None = None,
+        attention_mask: torch.Tensor | None = None,
+        image_rotary_emb: torch.Tensor | None = None,
     ) -> torch.Tensor:
         batch_size, sequence_length, _ = (
             hidden_states.shape if encoder_hidden_states is None else encoder_hidden_states.shape
@@ -266,7 +262,7 @@ class LTXAttention(torch.nn.Module, AttentionModuleMixin):
         dim_head: int = 64,
         dropout: float = 0.0,
         bias: bool = True,
-        cross_attention_dim: Optional[int] = None,
+        cross_attention_dim: int | None = None,
         out_bias: bool = True,
         qk_norm: str = "rms_norm_across_heads",
         processor=None,
@@ -307,9 +303,9 @@ class LTXAttention(torch.nn.Module, AttentionModuleMixin):
     def forward(
         self,
         hidden_states: torch.Tensor,
-        encoder_hidden_states: Optional[torch.Tensor] = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        image_rotary_emb: Optional[torch.Tensor] = None,
+        encoder_hidden_states: torch.Tensor | None = None,
+        attention_mask: torch.Tensor | None = None,
+        image_rotary_emb: torch.Tensor | None = None,
         **kwargs,
     ) -> torch.Tensor:
         attn_parameters = set(inspect.signature(self.processor.__call__).parameters.keys())
@@ -351,7 +347,7 @@ class LTXVideoRotaryPosEmbed(nn.Module):
         num_frames: int,
         height: int,
         width: int,
-        rope_interpolation_scale: Tuple[torch.Tensor, float, float],
+        rope_interpolation_scale: tuple[torch.Tensor, float, float],
         device: torch.device,
     ) -> torch.Tensor:
         grid_h = torch.arange(height, dtype=torch.float32, device=device)
@@ -374,12 +370,12 @@ class LTXVideoRotaryPosEmbed(nn.Module):
     def forward(
         self,
         hidden_states: torch.Tensor,
-        num_frames: Optional[int] = None,
-        height: Optional[int] = None,
-        width: Optional[int] = None,
-        rope_interpolation_scale: Optional[Tuple[torch.Tensor, float, float]] = None,
-        video_coords: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        num_frames: int | None = None,
+        height: int | None = None,
+        width: int | None = None,
+        rope_interpolation_scale: tuple[torch.Tensor, float, float] | None = None,
+        video_coords: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         batch_size = hidden_states.size(0)
 
         if video_coords is None:
@@ -481,10 +477,10 @@ class LTXVideoTransformerBlock(nn.Module):
         hidden_states: torch.Tensor,
         encoder_hidden_states: torch.Tensor,
         temb: torch.Tensor,
-        image_rotary_emb: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
-        encoder_attention_mask: Optional[torch.Tensor] = None,
-        self_attention_mask: Optional[torch.Tensor] = None,
-        token_mask: Optional[torch.Tensor] = None,
+        image_rotary_emb: tuple[torch.Tensor, torch.Tensor] | None = None,
+        encoder_attention_mask: torch.Tensor | None = None,
+        self_attention_mask: torch.Tensor | None = None,
+        token_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         batch_size = hidden_states.size(0)
         norm_hidden_states = self.norm1(hidden_states)
@@ -645,7 +641,7 @@ class LTXVideoTransformer3DModel(
             return x, height, width
 
         B, S, C = x.shape
-        assert S == num_frames * height * width, "Token length mismatch"
+        assert num_frames * height * width == S, "Token length mismatch"
         assert height % ps == 0 and width % ps == 0, f"H,W must be divisible by patch_size={ps}"
 
         x = x.view(B, num_frames, height, width, C)
@@ -664,7 +660,7 @@ class LTXVideoTransformer3DModel(
             return x
 
         B, S, Cout_ps2 = x.shape
-        assert S == num_frames * Hp * Wp, "Patched token length mismatch"
+        assert num_frames * Hp * Wp == S, "Patched token length mismatch"
         out_channels = Cout_ps2 // (ps * ps)
         assert out_channels * ps * ps == Cout_ps2, "Bad output channel multiple"
 
@@ -680,14 +676,14 @@ class LTXVideoTransformer3DModel(
         encoder_hidden_states: torch.Tensor,
         timestep: torch.LongTensor,
         encoder_attention_mask: torch.Tensor,
-        num_frames: Optional[int] = None,
-        height: Optional[int] = None,
-        width: Optional[int] = None,
-        rope_interpolation_scale: Optional[Union[Tuple[float, float, float], torch.Tensor]] = None,
-        video_coords: Optional[torch.Tensor] = None,
-        attention_kwargs: Optional[Dict[str, Any]] = None,
+        num_frames: int | None = None,
+        height: int | None = None,
+        width: int | None = None,
+        rope_interpolation_scale: tuple[float, float, float] | torch.Tensor | None = None,
+        video_coords: torch.Tensor | None = None,
+        attention_kwargs: dict[str, Any] | None = None,
         return_dict: bool = True,
-        frame_mask: Optional[torch.Tensor] = None,
+        frame_mask: torch.Tensor | None = None,
         return_frame_logits: bool = False,
     ) -> torch.Tensor:
         if attention_kwargs is not None:
@@ -743,9 +739,9 @@ class LTXVideoTransformer3DModel(
             hidden_states = torch.cat([hs4, ftok], dim=2).reshape(
                 batch_size, num_frames * (tokens_per_frame + 1), -1
             )
-            S_total = hidden_states.shape[1]
+            hidden_states.shape[1]
         else:
-            S_total = hidden_states.shape[1]
+            hidden_states.shape[1]
 
         if timestep.ndim == 2:
             if timestep.shape[1] != num_frames:
@@ -880,11 +876,11 @@ class FlowceptionV3_LTXWrapper(nn.Module):
         # LTX-specific
         model_size: str = "2b",  # "2b" or "13b"
         ltx_in_channels: int = 128,
-        ltx_out_channels: Optional[int] = None,
+        ltx_out_channels: int | None = None,
         ltx_caption_channels: int = 4096,
         use_frame_tokens: bool = True,
         use_insertion_head: bool = True,
-        checkpoint_path: Optional[str] = None,
+        checkpoint_path: str | None = None,
         **kwargs,
     ):
         super().__init__()
@@ -939,8 +935,9 @@ class FlowceptionV3_LTXWrapper(nn.Module):
         self.fallback_logits = nn.Linear(ltx_out_channels, 1)
 
     def _load_checkpoint(self, checkpoint_path: str):
-        from pathlib import Path
         import glob
+        from pathlib import Path
+
         from safetensors.torch import load_file
 
         checkpoint_path = Path(checkpoint_path)
@@ -1015,7 +1012,7 @@ class FlowceptionV3_LTXWrapper(nn.Module):
             - The transformer expects timestep * 1000 (scaled to [0, 1000])
         """
         B, D, C, H, W = sample.shape
-        if C != self.ltx_in_channels:
+        if self.ltx_in_channels != C:
             raise ValueError(f"Expected sample channels C={self.ltx_in_channels}, got {C}.")
 
         # Build token sequence: [B, S_img, C] where S_img = D*H*W
@@ -1345,7 +1342,7 @@ ltxn_98_models = {
 
 # Convenience function to create model by version
 def create_ltx_model(
-    version: Union[str, LTXModelVersion], checkpoint_path: Optional[str] = None, **kwargs
+    version: str | LTXModelVersion, checkpoint_path: str | None = None, **kwargs
 ) -> FlowceptionV3_LTXWrapper:
     """
     Create LTX model by version string or enum.

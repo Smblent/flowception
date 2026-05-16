@@ -1,5 +1,4 @@
 import torch
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 
 
 @torch.no_grad()
@@ -17,7 +16,7 @@ def update_ema(ema_model, model, decay=0.9999):
     ema_params = dict(actual_ema.named_parameters())
     model_params = dict(actual_model.named_parameters())
 
-    for name in ema_params.keys():
+    for name in ema_params:
         if name in model_params:
             # In-place multiply-add: fastest operation
             ema_params[name].mul_(decay).add_(model_params[name], alpha=1.0 - decay)

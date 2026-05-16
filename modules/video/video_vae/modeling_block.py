@@ -1,24 +1,21 @@
-from typing import Any, Dict, Optional, Tuple, Union
 
-import numpy as np
 import torch
-import torch.nn.functional as F
-from torch import nn
-from einops import rearrange
-
-from diffusers.utils import logging
 from diffusers.models.attention_processor import Attention
+from diffusers.utils import logging
+from einops import rearrange
+from torch import nn
+
 from .modeling_resnet import (
+    CausalDownsample2x,
+    CausalResnetBlock3D,
+    CausalTemporalDownsample2x,
+    CausalTemporalUpsample2x,
+    CausalUpsample2x,
     Downsample2D,
     ResnetBlock2D,
-    CausalResnetBlock3D,
-    Upsample2D,
     TemporalDownsample2x,
     TemporalUpsample2x,
-    CausalDownsample2x,
-    CausalTemporalDownsample2x,
-    CausalUpsample2x,
-    CausalTemporalUpsample2x,
+    Upsample2D,
 )
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
@@ -89,10 +86,10 @@ def get_down_block(
     add_temporal_downsample: bool = None,
     resnet_eps: float = 1e-6,
     resnet_act_fn: str = "silu",
-    resnet_groups: Optional[int] = None,
-    downsample_padding: Optional[int] = None,
+    resnet_groups: int | None = None,
+    downsample_padding: int | None = None,
     resnet_time_scale_shift: str = "default",
-    attention_head_dim: Optional[int] = None,
+    attention_head_dim: int | None = None,
     dropout: float = 0.0,
     norm_affline: bool = True,
     norm_layer: str = "layer",
@@ -142,10 +139,10 @@ def get_up_block(
     add_temporal_upsample: bool = None,
     resnet_eps: float = 1e-6,
     resnet_act_fn: str = "silu",
-    resolution_idx: Optional[int] = None,
-    resnet_groups: Optional[int] = None,
+    resolution_idx: int | None = None,
+    resnet_groups: int | None = None,
     resnet_time_scale_shift: str = "default",
-    attention_head_dim: Optional[int] = None,
+    attention_head_dim: int | None = None,
     dropout: float = 0.0,
     interpolate: bool = True,
     norm_affline: bool = True,
@@ -230,7 +227,7 @@ class UNetMidBlock2D(nn.Module):
         resnet_time_scale_shift: str = "default",  # default, spatial
         resnet_act_fn: str = "swish",
         resnet_groups: int = 32,
-        attn_groups: Optional[int] = None,
+        attn_groups: int | None = None,
         resnet_pre_norm: bool = True,
         add_attention: bool = True,
         attention_head_dim: int = 1,
@@ -306,7 +303,7 @@ class UNetMidBlock2D(nn.Module):
         self.resnets = nn.ModuleList(resnets)
 
     def forward(
-        self, hidden_states: torch.FloatTensor, temb: Optional[torch.FloatTensor] = None
+        self, hidden_states: torch.FloatTensor, temb: torch.FloatTensor | None = None
     ) -> torch.FloatTensor:
         hidden_states = self.resnets[0](hidden_states, temb)
         t = hidden_states.shape[2]
@@ -365,7 +362,7 @@ class CausalUNetMidBlock2D(nn.Module):
         resnet_time_scale_shift: str = "default",  # default, spatial
         resnet_act_fn: str = "swish",
         resnet_groups: int = 32,
-        attn_groups: Optional[int] = None,
+        attn_groups: int | None = None,
         resnet_pre_norm: bool = True,
         add_attention: bool = True,
         attention_head_dim: int = 1,
@@ -443,7 +440,7 @@ class CausalUNetMidBlock2D(nn.Module):
     def forward(
         self,
         hidden_states: torch.FloatTensor,
-        temb: Optional[torch.FloatTensor] = None,
+        temb: torch.FloatTensor | None = None,
         is_init_image=True,
         temporal_chunk=False,
     ) -> torch.FloatTensor:
@@ -643,7 +640,7 @@ class UpDecoderBlock2D(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        resolution_idx: Optional[int] = None,
+        resolution_idx: int | None = None,
         dropout: float = 0.0,
         num_layers: int = 1,
         resnet_eps: float = 1e-6,
@@ -654,7 +651,7 @@ class UpDecoderBlock2D(nn.Module):
         output_scale_factor: float = 1.0,
         add_spatial_upsample: bool = True,
         add_temporal_upsample: bool = False,
-        temb_channels: Optional[int] = None,
+        temb_channels: int | None = None,
         interpolate: bool = True,
     ):
         super().__init__()
@@ -703,7 +700,7 @@ class UpDecoderBlock2D(nn.Module):
     def forward(
         self,
         hidden_states: torch.FloatTensor,
-        temb: Optional[torch.FloatTensor] = None,
+        temb: torch.FloatTensor | None = None,
         scale: float = 1.0,
         is_image: bool = False,
     ) -> torch.FloatTensor:
@@ -726,7 +723,7 @@ class UpDecoderBlockCausal3D(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        resolution_idx: Optional[int] = None,
+        resolution_idx: int | None = None,
         dropout: float = 0.0,
         num_layers: int = 1,
         resnet_eps: float = 1e-6,
@@ -737,7 +734,7 @@ class UpDecoderBlockCausal3D(nn.Module):
         output_scale_factor: float = 1.0,
         add_spatial_upsample: bool = True,
         add_temporal_upsample: bool = False,
-        temb_channels: Optional[int] = None,
+        temb_channels: int | None = None,
         interpolate: bool = True,
     ):
         super().__init__()
@@ -790,7 +787,7 @@ class UpDecoderBlockCausal3D(nn.Module):
     def forward(
         self,
         hidden_states: torch.FloatTensor,
-        temb: Optional[torch.FloatTensor] = None,
+        temb: torch.FloatTensor | None = None,
         is_init_image=True,
         temporal_chunk=False,
     ) -> torch.FloatTensor:

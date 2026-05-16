@@ -121,6 +121,11 @@ select = [
   # isort
   "I",
 ]
+ignore = [
+  # Keep module-level delayed imports and a few long scientific/comment lines acceptable in this codebase.
+  "E402",
+  "E501",
+]
 
 [tool.ruff.lint.isort]
 known-third-party = ["wandb"]

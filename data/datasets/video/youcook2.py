@@ -1,14 +1,15 @@
-import os, math, json, random
+import json
+import os
+import random
+
 import joblib
 import numpy as np
-import tqdm
 import torch
-from torch.utils.data import Dataset
 from decord import VideoReader, cpu
-from engine.data_classes import Datapoint
-from torch.utils.data import get_worker_info
-
 from decord import bridge as decord_bridge
+from torch.utils.data import Dataset, get_worker_info
+
+from engine.data_classes import Datapoint
 
 decord_bridge.set_bridge("torch")  # call once at import time (e.g., top of file)
 
@@ -63,7 +64,7 @@ class YouCook2Flowception(Dataset):
             if annotations.endswith((".pt", ".pkl", ".joblib")):
                 annotations = joblib.load(annotations)
             elif annotations.endswith(".json"):
-                with open(annotations, "r", encoding="utf-8") as f:
+                with open(annotations, encoding="utf-8") as f:
                     annotations = json.load(f)
             else:
                 raise ValueError(f"Unsupported annotations file: {annotations}")
@@ -288,7 +289,7 @@ class YouCook2Flowception(Dataset):
         # How many frames can we take from this segment at this stride?
         # valid_len is capped by both T and segment length at stride.
         max_valid = 1 + (seg_len - 1) // stride
-        valid_len = min(T, max_valid)
+        min(T, max_valid)
 
         ld = self.latent_downsample  # 8
 
@@ -309,7 +310,7 @@ class YouCook2Flowception(Dataset):
         # choose a target ≤ both T and max_valid, then ALIGN: L = 1 + k*ld
         target = min(T, max_valid)
         L = 1 if target <= 1 else 1 + ((target - 1) // ld) * ld
-        if L < min_valid_needed:
+        if min_valid_needed > L:
             L = min_valid_needed
         # Now (L - 1) % ld == 0 and L ≤ T and L ≤ max_valid
 

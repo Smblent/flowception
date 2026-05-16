@@ -1,25 +1,18 @@
-from typing import Tuple, Union
+from collections import deque
+
 import torch
 import torch.nn as nn
-from torch.utils.checkpoint import checkpoint
 import torch.nn.functional as F
-from collections import deque
 from einops import rearrange
 from timm.models.layers import trunc_normal_
 from torch import Tensor
 
-from .utils import (
-    is_context_parallel_initialized,
-    get_context_parallel_group,
-    get_context_parallel_world_size,
-    get_context_parallel_rank,
-    get_context_parallel_group_rank,
-)
-
 from .context_parallel_ops import (
-    conv_scatter_to_context_parallel_region,
-    conv_gather_from_context_parallel_region,
     cp_pass_from_previous_rank,
+)
+from .utils import (
+    get_context_parallel_rank,
+    is_context_parallel_initialized,
 )
 
 
@@ -49,8 +42,8 @@ class CausalConv3d(nn.Module):
         self,
         in_channels,
         out_channels,
-        kernel_size: Union[int, Tuple[int, int, int]],
-        stride: Union[int, Tuple[int, int, int]] = 1,
+        kernel_size: int | tuple[int, int, int],
+        stride: int | tuple[int, int, int] = 1,
         pad_mode: str = "constant",
         **kwargs,
     ):

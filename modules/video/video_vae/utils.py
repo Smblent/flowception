@@ -1,19 +1,19 @@
 import os
-import torch
-import PIL.Image
-import numpy as np
-from torch import nn
-import torch.distributed as dist
+
 import timm.models.hub as timm_hub
+import torch
+import torch.distributed as dist
+from torch import nn
 
 """Modified from https://github.com/CompVis/taming-transformers.git"""
 
 import hashlib
+
 import requests
 from tqdm import tqdm
 
 try:
-    import piq
+    pass
 except:
     pass
 
@@ -155,6 +155,7 @@ def convert_weights_to_bf16(model: nn.Module):
 
 def save_result(result, result_dir, filename, remove_duplicate="", save_format="json"):
     import json
+
     import jsonlines
 
     # Make the temp dir for saving results
@@ -178,7 +179,7 @@ def save_result(result, result_dir, filename, remove_duplicate="", save_format="
 
         for rank in range(get_world_size()):
             result_file = os.path.join(result_dir, "%s_rank%d.json" % (filename, rank))
-            res = json.load(open(result_file, "r"))
+            res = json.load(open(result_file))
             result += res
 
         if remove_duplicate:
@@ -320,12 +321,11 @@ def download(url, local_path, chunk_size=1024):
     os.makedirs(os.path.split(local_path)[0], exist_ok=True)
     with requests.get(url, stream=True) as r:
         total_size = int(r.headers.get("content-length", 0))
-        with tqdm(total=total_size, unit="B", unit_scale=True) as pbar:
-            with open(local_path, "wb") as f:
-                for data in r.iter_content(chunk_size=chunk_size):
-                    if data:
-                        f.write(data)
-                        pbar.update(chunk_size)
+        with tqdm(total=total_size, unit="B", unit_scale=True) as pbar, open(local_path, "wb") as f:
+            for data in r.iter_content(chunk_size=chunk_size):
+                if data:
+                    f.write(data)
+                    pbar.update(chunk_size)
 
 
 def md5_hash(path):
@@ -338,7 +338,7 @@ def get_ckpt_path(name, root, check=False):
     assert name in URL_MAP
     path = os.path.join(root, CKPT_MAP[name])
     if not os.path.exists(path) or (check and not md5_hash(path) == MD5_MAP[name]):
-        print("Downloading {} model from {} to {}".format(name, URL_MAP[name], path))
+        print(f"Downloading {name} model from {URL_MAP[name]} to {path}")
         download(URL_MAP[name], path)
         md5 = md5_hash(path)
         assert md5 == MD5_MAP[name], md5
@@ -352,10 +352,10 @@ class KeyNotFoundError(Exception):
         self.visited = visited
         messages = list()
         if keys is not None:
-            messages.append("Key not found: {}".format(keys))
+            messages.append(f"Key not found: {keys}")
         if visited is not None:
-            messages.append("Visited: {}".format(visited))
-        messages.append("Cause:\n{}".format(cause))
+            messages.append(f"Visited: {visited}")
+        messages.append(f"Cause:\n{cause}")
         message = "\n".join(messages)
         super().__init__(message)
 

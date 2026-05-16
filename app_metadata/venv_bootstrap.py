@@ -65,7 +65,7 @@ def main() -> int:
 
     elif command == "test":
         try:
-            import pytest
+            import pytest  # type: ignore[import-not-found]
         except ImportError:
             print("pytest not installed. Install with: pip install pytest")
             return 1

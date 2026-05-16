@@ -3,7 +3,7 @@ import random
 from logging import LoggerAdapter
 
 import torch
-from torch.utils.data import Dataset, IterableDataset
+from torch.utils.data import IterableDataset
 from yacs.config import CfgNode
 
 from data.datasets.video.toy_coloring import ToyColoringDataset

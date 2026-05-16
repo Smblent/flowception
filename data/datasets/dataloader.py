@@ -2,9 +2,8 @@ from collections.abc import Sequence
 
 import numpy as np
 from accelerate.data_loader import skip_first_batches
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, IterableDataset
 from webdataset import WebLoader
-from torch.utils.data import IterableDataset
 
 
 def get_train_dataloader(

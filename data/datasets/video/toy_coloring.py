@@ -5,7 +5,6 @@ a colour palette.  No files on disk are required — everything is synthesised o
 the fly, making this dataset ideal for unit tests and quick integration checks.
 """
 
-import numpy as np
 import torch
 from torch.utils.data import Dataset
 

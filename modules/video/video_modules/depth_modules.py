@@ -1,7 +1,5 @@
-import torch.nn as nn
 import torch
-import torch._dynamo as dynamo
-
+import torch.nn as nn
 from einops import rearrange
 
 

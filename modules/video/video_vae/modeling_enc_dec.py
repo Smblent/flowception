@@ -1,27 +1,15 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
 
 import numpy as np
 import torch
 import torch.nn as nn
-from einops import rearrange
-
 from diffusers.utils import BaseOutput, is_torch_version
 from diffusers.utils.torch_utils import randn_tensor
-from diffusers.models.attention_processor import SpatialNorm
+
 from .modeling_block import (
-    UNetMidBlock2D,
     CausalUNetMidBlock2D,
     get_down_block,
     get_up_block,
-    get_input_layer,
-    get_output_layer,
-)
-from .modeling_resnet import (
-    Downsample2D,
-    Upsample2D,
-    TemporalDownsample2x,
-    TemporalUpsample2x,
 )
 from .modeling_causal_conv import CausalConv3d, CausalGroupNorm
 
@@ -67,15 +55,15 @@ class CausalVaeEncoder(nn.Module):
         self,
         in_channels: int = 3,
         out_channels: int = 3,
-        down_block_types: Tuple[str, ...] = ("DownEncoderBlockCausal3D",),
-        spatial_down_sample: Tuple[bool, ...] = (True,),
-        temporal_down_sample: Tuple[bool, ...] = (False,),
-        block_out_channels: Tuple[int, ...] = (64,),
-        layers_per_block: Tuple[int, ...] = (2,),
+        down_block_types: tuple[str, ...] = ("DownEncoderBlockCausal3D",),
+        spatial_down_sample: tuple[bool, ...] = (True,),
+        temporal_down_sample: tuple[bool, ...] = (False,),
+        block_out_channels: tuple[int, ...] = (64,),
+        layers_per_block: tuple[int, ...] = (2,),
         norm_num_groups: int = 32,
         act_fn: str = "silu",
         double_z: bool = True,
-        block_dropout: Tuple[int, ...] = (0.0,),
+        block_dropout: tuple[int, ...] = (0.0,),
         mid_block_add_attention=True,
     ):
         super().__init__()
@@ -226,16 +214,16 @@ class CausalVaeDecoder(nn.Module):
         self,
         in_channels: int = 3,
         out_channels: int = 3,
-        up_block_types: Tuple[str, ...] = ("UpDecoderBlockCausal3D",),
-        spatial_up_sample: Tuple[bool, ...] = (True,),
-        temporal_up_sample: Tuple[bool, ...] = (False,),
-        block_out_channels: Tuple[int, ...] = (64,),
-        layers_per_block: Tuple[int, ...] = (2,),
+        up_block_types: tuple[str, ...] = ("UpDecoderBlockCausal3D",),
+        spatial_up_sample: tuple[bool, ...] = (True,),
+        temporal_up_sample: tuple[bool, ...] = (False,),
+        block_out_channels: tuple[int, ...] = (64,),
+        layers_per_block: tuple[int, ...] = (2,),
         norm_num_groups: int = 32,
         act_fn: str = "silu",
         mid_block_add_attention=True,
         interpolate: bool = True,
-        block_dropout: Tuple[int, ...] = (0.0,),
+        block_dropout: tuple[int, ...] = (0.0,),
     ):
         super().__init__()
         self.layers_per_block = layers_per_block
@@ -271,7 +259,7 @@ class CausalVaeDecoder(nn.Module):
             prev_output_channel = output_channel
             output_channel = reversed_block_out_channels[i]
 
-            is_final_block = i == len(block_out_channels) - 1
+            i == len(block_out_channels) - 1
 
             up_block = get_up_block(
                 up_block_type,
@@ -380,7 +368,7 @@ class CausalVaeDecoder(nn.Module):
         return sample
 
 
-class DiagonalGaussianDistribution(object):
+class DiagonalGaussianDistribution:
     def __init__(self, parameters: torch.Tensor, deterministic: bool = False):
         self.parameters = parameters
         self.mean, self.logvar = torch.chunk(parameters, 2, dim=1)
@@ -393,7 +381,7 @@ class DiagonalGaussianDistribution(object):
                 self.mean, device=self.parameters.device, dtype=self.parameters.dtype
             )
 
-    def sample(self, generator: Optional[torch.Generator] = None) -> torch.FloatTensor:
+    def sample(self, generator: torch.Generator | None = None) -> torch.FloatTensor:
         # make sure sample is on the same device as the parameters and has same dtype
         sample = randn_tensor(
             self.mean.shape,
@@ -423,7 +411,7 @@ class DiagonalGaussianDistribution(object):
                     dim=[2, 3, 4],
                 )
 
-    def nll(self, sample: torch.Tensor, dims: Tuple[int, ...] = [1, 2, 3]) -> torch.Tensor:
+    def nll(self, sample: torch.Tensor, dims: tuple[int, ...] = [1, 2, 3]) -> torch.Tensor:
         if self.deterministic:
             return torch.Tensor([0.0])
         logtwopi = np.log(2.0 * np.pi)

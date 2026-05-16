@@ -10,7 +10,6 @@
 # Part of this implementation is adapted from https://github.com/louaaron/Score-Entropy-Discrete-Diffusion
 # which is released under MIT license
 
-from typing import Tuple
 
 import torch
 from einops import repeat
@@ -30,7 +29,7 @@ class Rotary(torch.nn.Module):
         self.cos_cached = None
         self.sin_cached = None
 
-    def forward(self, x: Tensor, seq_dim: int = 1) -> Tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor, seq_dim: int = 1) -> tuple[Tensor, Tensor]:
         seq_len = x.shape[seq_dim]
         if seq_len != self.seq_len_cached:
             self.seq_len_cached = seq_len

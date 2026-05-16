@@ -1,5 +1,5 @@
-import os
 import json
+import os
 import random
 from pathlib import Path
 
@@ -8,8 +8,8 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from helpers.utils import pil_loader_v2_blur
 from engine.data_classes import Datapoint
+from helpers.utils import pil_loader_v2_blur
 
 
 class JSONDataset(Dataset):
@@ -263,7 +263,7 @@ class JSONExtDataset(Dataset):
             mask = mask.transpose(Image.FLIP_LEFT_RIGHT)
 
         w, h = img.size
-        w0, h0 = w, h
+        _w0, _h0 = w, h
 
         dw, dh, x0, y0 = w, h, 0, 0
         img_cropped = img.resize(self.img_size, resample=3)

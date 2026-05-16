@@ -14,24 +14,19 @@
 # which is released under MIT license
 
 import math
-from typing import Optional
 
+import rotary
 import torch
 import torch.nn.functional as F
-
 from einops import rearrange
 from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
-
-from torch.nn.attention.flex_attention import BlockMask, flex_attention, create_block_mask
-
-from torch import nn, Tensor
-
-import rotary
+from torch import Tensor, nn
+from torch.nn.attention.flex_attention import BlockMask, flex_attention
 
 
 def bias_dropout_add_scale(
-    x: Tensor, scale: Tensor, residual: Optional[Tensor], prob: float, training: bool
+    x: Tensor, scale: Tensor, residual: Tensor | None, prob: float, training: bool
 ) -> Tensor:
     return residual + scale * F.dropout(x, p=prob, training=training)
 
@@ -141,7 +136,7 @@ class DDiTBlock(nn.Module):
         self.adaLN_modulation.weight.data.zero_()
         self.adaLN_modulation.bias.data.zero_()
 
-    def forward(self, x: Tensor, rotary_cos_sin: Tensor, c: Tensor, mask: Optional[Tensor] = None) -> Tensor:
+    def forward(self, x: Tensor, rotary_cos_sin: Tensor, c: Tensor, mask: Tensor | None = None) -> Tensor:
         batch_size, seq_len = x.shape[0], x.shape[1]
 
         (

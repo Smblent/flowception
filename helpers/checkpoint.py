@@ -3,7 +3,6 @@
 import inspect
 from collections import defaultdict
 
-import torch
 from accelerate.utils import save_fsdp_model
 from transformers.utils import is_accelerate_available
 

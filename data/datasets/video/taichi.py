@@ -628,14 +628,14 @@
 
 # taichi_mp4_dataset.py
 import os
+
 import joblib
-import tqdm
 import numpy as np
 import torch
-from torch.utils.data import Dataset
-
+import tqdm
 from decord import VideoReader, cpu
 from decord import bridge as decord_bridge
+from torch.utils.data import Dataset
 
 decord_bridge.set_bridge("torch")  # return torch tensors from decord
 
@@ -784,7 +784,7 @@ class TaichiDatasetFlowception(Dataset):
         # choose aligned L (≤ T and ≤ max_valid), then ensure L ≥ min_valid_needed
         target = min(T, max_valid)
         L = 1 if target <= 1 else 1 + ((target - 1) // ld) * ld
-        if L < min_valid_needed:
+        if min_valid_needed > L:
             L = min_valid_needed  # still ≤ max_valid thanks to the check above
         # L is RGB frames, aligned so that (1 + (L-1)//ld) is integer latents
 

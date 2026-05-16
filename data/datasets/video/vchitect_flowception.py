@@ -1,14 +1,18 @@
 # vchitect_tar_flowception_fps.py
-import io, os, json, sqlite3, numpy as np, torch, tqdm
+import io
+import json
+import os
+import sqlite3
 from pathlib import Path
-from torch.utils.data import Dataset
-import av  # pip install av
-from torchvision.transforms.functional import resize
-from engine.data_classes import Datapoint  # your class
 
 # add near your imports
 import decord
+import numpy as np
+import torch
 from decord import VideoReader, cpu, gpu
+from torch.utils.data import Dataset
+
+from engine.data_classes import Datapoint  # your class
 
 decord.bridge.set_bridge("torch")  # returns torch tensors instead of NDArray
 
@@ -53,7 +57,7 @@ def _decode_with_decord_from_bytes(
     # choose L aligned to 1 + n*ld, clipped by T and max_valid
     target = min(T, max_valid)
     L = 1 if target <= 1 else 1 + ((target - 1) // ld) * ld
-    if L < min_valid_needed:
+    if min_valid_needed > L:
         L = min_valid_needed
 
     # pick a start that fits L at stride s

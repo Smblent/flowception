@@ -1,13 +1,12 @@
 # from cogvideoX
+
 import torch
-import torch.nn as nn
-import math
 
 from .utils import (
     get_context_parallel_group,
+    get_context_parallel_group_rank,
     get_context_parallel_rank,
     get_context_parallel_world_size,
-    get_context_parallel_group_rank,
 )
 
 
@@ -72,11 +71,11 @@ def _cp_pass_from_previous_rank(input_, dim, kernel_size):
 
     group = get_context_parallel_group()
     cp_rank = get_context_parallel_rank()
-    cp_group_rank = get_context_parallel_group_rank()
+    get_context_parallel_group_rank()
     cp_world_size = get_context_parallel_world_size()
 
     global_rank = torch.distributed.get_rank()
-    global_world_size = torch.distributed.get_world_size()
+    torch.distributed.get_world_size()
 
     input_ = input_.transpose(0, dim)
 
@@ -90,7 +89,7 @@ def _cp_pass_from_previous_rank(input_, dim, kernel_size):
 
     recv_buffer = torch.empty_like(input_[-kernel_size + 1 :]).contiguous()
     if cp_rank < cp_world_size - 1:
-        req_send = torch.distributed.isend(input_[-kernel_size + 1 :].contiguous(), send_rank, group=group)
+        torch.distributed.isend(input_[-kernel_size + 1 :].contiguous(), send_rank, group=group)
     if cp_rank > 0:
         req_recv = torch.distributed.irecv(recv_buffer, recv_rank, group=group)
 

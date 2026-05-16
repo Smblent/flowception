@@ -1,15 +1,13 @@
-import torch
 import os
-import json
-import tqdm
-import numpy as np
-import pandas as pd
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+import torch
+from decord import VideoReader, cpu
 from torch.utils.data import Dataset
-from engine.data_classes import Datapoint
 
-from decord import VideoReader, cpu, gpu
+from engine.data_classes import Datapoint
 
 
 class OpenVid1MDataset(Dataset):

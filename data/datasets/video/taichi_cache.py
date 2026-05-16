@@ -221,12 +221,14 @@
 
 
 # taichi_inmemory_per_worker.py
-import os, joblib, numpy as np, torch, tqdm
-from torch.utils.data import Dataset, get_worker_info
-from collections import OrderedDict
+import os
 
+import joblib
+import numpy as np
+import torch
 from decord import VideoReader, cpu
 from decord import bridge as decord_bridge
+from torch.utils.data import Dataset, get_worker_info
 
 decord_bridge.set_bridge("torch")
 
@@ -398,7 +400,7 @@ class TaichiInMemoryFlowception(Dataset):
 
         target = min(T, max_valid)
         L = 1 if target <= 1 else 1 + ((target - 1) // ld) * ld
-        if L < min_valid_needed:
+        if min_valid_needed > L:
             L = min_valid_needed
 
         max_start = L_total - (L - 1) * s

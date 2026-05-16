@@ -1,9 +1,11 @@
-import cv2, os
-from pathlib import Path
-import numpy as np
-from PIL import Image
 import io
+import os
+from pathlib import Path
+
+import cv2
+import numpy as np
 from IPython.display import Image as ip_im
+from PIL import Image
 
 
 def write_frames_to_video(

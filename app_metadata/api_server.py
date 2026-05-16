@@ -101,9 +101,6 @@ class RuleEngineHandler(BaseHTTPRequestHandler):
             not_found_payload = json.dumps({"error": "Not found"}).encode("utf-8")
             _ = self.wfile.write(not_found_payload)
 
-    def log_message(self, message_format: str, *args: Any) -> None:
-        """Suppress default logging."""
-
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run Flowception rule engine as HTTP API.")

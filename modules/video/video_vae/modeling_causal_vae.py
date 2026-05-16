@@ -1,7 +1,6 @@
-from typing import Dict, Optional, Tuple, Union
+
 import torch
 import torch.nn as nn
-
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.models.attention_processor import (
     ADDED_KV_ATTENTION_PROCESSORS,
@@ -11,30 +10,23 @@ from diffusers.models.attention_processor import (
     AttnAddedKVProcessor,
     AttnProcessor,
 )
-
 from diffusers.models.modeling_outputs import AutoencoderKLOutput
 from diffusers.models.modeling_utils import ModelMixin
-
-from timm.models.layers import drop_path, to_2tuple, trunc_normal_
-from .modeling_enc_dec import (
-    DecoderOutput,
-    DiagonalGaussianDistribution,
-    CausalVaeDecoder,
-    CausalVaeEncoder,
-)
-from .modeling_causal_conv import CausalConv3d
-
-from .utils import (
-    is_context_parallel_initialized,
-    get_context_parallel_group,
-    get_context_parallel_world_size,
-    get_context_parallel_rank,
-    get_context_parallel_group_rank,
-)
+from timm.models.layers import trunc_normal_
 
 from .context_parallel_ops import (
-    conv_scatter_to_context_parallel_region,
     conv_gather_from_context_parallel_region,
+)
+from .modeling_causal_conv import CausalConv3d
+from .modeling_enc_dec import (
+    CausalVaeDecoder,
+    CausalVaeEncoder,
+    DecoderOutput,
+    DiagonalGaussianDistribution,
+)
+from .utils import (
+    get_context_parallel_rank,
+    is_context_parallel_initialized,
 )
 
 
@@ -78,17 +70,17 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
         # encoder related parameters
         encoder_in_channels: int = 3,
         encoder_out_channels: int = 4,
-        encoder_layers_per_block: Tuple[int, ...] = (2, 2, 2, 2),
-        encoder_down_block_types: Tuple[str, ...] = (
+        encoder_layers_per_block: tuple[int, ...] = (2, 2, 2, 2),
+        encoder_down_block_types: tuple[str, ...] = (
             "DownEncoderBlockCausal3D",
             "DownEncoderBlockCausal3D",
             "DownEncoderBlockCausal3D",
             "DownEncoderBlockCausal3D",
         ),
-        encoder_block_out_channels: Tuple[int, ...] = (128, 256, 512, 512),
-        encoder_spatial_down_sample: Tuple[bool, ...] = (True, True, True, False),
-        encoder_temporal_down_sample: Tuple[bool, ...] = (True, True, True, False),
-        encoder_block_dropout: Tuple[int, ...] = (0.0, 0.0, 0.0, 0.0),
+        encoder_block_out_channels: tuple[int, ...] = (128, 256, 512, 512),
+        encoder_spatial_down_sample: tuple[bool, ...] = (True, True, True, False),
+        encoder_temporal_down_sample: tuple[bool, ...] = (True, True, True, False),
+        encoder_block_dropout: tuple[int, ...] = (0.0, 0.0, 0.0, 0.0),
         encoder_act_fn: str = "silu",
         encoder_norm_num_groups: int = 32,
         encoder_double_z: bool = True,
@@ -96,17 +88,17 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
         # decoder related
         decoder_in_channels: int = 4,
         decoder_out_channels: int = 3,
-        decoder_layers_per_block: Tuple[int, ...] = (3, 3, 3, 3),
-        decoder_up_block_types: Tuple[str, ...] = (
+        decoder_layers_per_block: tuple[int, ...] = (3, 3, 3, 3),
+        decoder_up_block_types: tuple[str, ...] = (
             "UpDecoderBlockCausal3D",
             "UpDecoderBlockCausal3D",
             "UpDecoderBlockCausal3D",
             "UpDecoderBlockCausal3D",
         ),
-        decoder_block_out_channels: Tuple[int, ...] = (128, 256, 512, 512),
-        decoder_spatial_up_sample: Tuple[bool, ...] = (True, True, True, False),
-        decoder_temporal_up_sample: Tuple[bool, ...] = (True, True, True, False),
-        decoder_block_dropout: Tuple[int, ...] = (0.0, 0.0, 0.0, 0.0),
+        decoder_block_out_channels: tuple[int, ...] = (128, 256, 512, 512),
+        decoder_spatial_up_sample: tuple[bool, ...] = (True, True, True, False),
+        decoder_temporal_up_sample: tuple[bool, ...] = (True, True, True, False),
+        decoder_block_dropout: tuple[int, ...] = (0.0, 0.0, 0.0, 0.0),
         decoder_act_fn: str = "silu",
         decoder_norm_num_groups: int = 32,
         decoder_type: str = "causal_vae_conv",
@@ -202,7 +194,7 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
 
     @property
     # Copied from diffusers.models.unets.unet_2d_condition.UNet2DConditionModel.attn_processors
-    def attn_processors(self) -> Dict[str, AttentionProcessor]:
+    def attn_processors(self) -> dict[str, AttentionProcessor]:
         r"""
         Returns:
             `dict` of attention processors: A dictionary containing all attention processors used in the model with
@@ -212,7 +204,7 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
         processors = {}
 
         def fn_recursive_add_processors(
-            name: str, module: torch.nn.Module, processors: Dict[str, AttentionProcessor]
+            name: str, module: torch.nn.Module, processors: dict[str, AttentionProcessor]
         ):
             if hasattr(module, "get_processor"):
                 processors[f"{name}.processor"] = module.get_processor(return_deprecated_lora=True)
@@ -228,7 +220,7 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
         return processors
 
     # Copied from diffusers.models.unets.unet_2d_condition.UNet2DConditionModel.set_attn_processor
-    def set_attn_processor(self, processor: Union[AttentionProcessor, Dict[str, AttentionProcessor]]):
+    def set_attn_processor(self, processor: AttentionProcessor | dict[str, AttentionProcessor]):
         r"""
         Sets the attention processor to use to compute attention.
 
@@ -286,7 +278,7 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
         temporal_chunk=False,
         window_size=16,
         tile_sample_min_size=256,
-    ) -> Union[AutoencoderKLOutput, Tuple[DiagonalGaussianDistribution]]:
+    ) -> AutoencoderKLOutput | tuple[DiagonalGaussianDistribution]:
         """
         Encode a batch of images into latents.
 
@@ -400,7 +392,7 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
         return_dict: bool = True,
         window_size: int = 2,
         tile_sample_min_size: int = 256,
-    ) -> Union[DecoderOutput, torch.FloatTensor]:
+    ) -> DecoderOutput | torch.FloatTensor:
 
         self.tile_sample_min_size = tile_sample_min_size
         self.tile_latent_min_size = int(tile_sample_min_size / self.downsample_scale)
@@ -515,7 +507,7 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
         temporal_chunk=False,
         window_size=2,
         return_dict: bool = True,
-    ) -> Union[DecoderOutput, torch.FloatTensor]:
+    ) -> DecoderOutput | torch.FloatTensor:
         r"""
         Decode a batch of images using a tiled decoder.
 
@@ -571,11 +563,11 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
         self,
         sample: torch.FloatTensor,
         sample_posterior: bool = True,
-        generator: Optional[torch.Generator] = None,
+        generator: torch.Generator | None = None,
         freeze_encoder: bool = False,
         is_init_image=True,
         temporal_chunk=False,
-    ) -> Union[DecoderOutput, torch.FloatTensor]:
+    ) -> DecoderOutput | torch.FloatTensor:
         r"""
         Args:
             sample (`torch.FloatTensor`): Input sample.

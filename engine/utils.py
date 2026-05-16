@@ -166,7 +166,7 @@ def frame_cov_full_masked(x: torch.Tensor, m: torch.Tensor, eps: float = 1e-6) -
 def downsample_video(img: torch.Tensor, out_h: int, out_w: int) -> torch.Tensor:
     """Downsample [B,C,T,H,W] video to [B,C,T,out_h,out_w]."""
     B, C, T, H, W = img.shape
-    if (H, W) == (out_h, out_w):
+    if (out_h, out_w) == (H, W):
         return img
     frames = img.permute(0, 2, 1, 3, 4).reshape(B * T, C, H, W).contiguous()
     frames = torch.nn.functional.interpolate(
