@@ -1,5 +1,5 @@
 <!-- copilot-context-manager:begin -->
-<!-- Active context: General Development — updated 2026-05-16T08:45:11.156Z -->
+<!-- Active context: General Development — updated 2026-05-16T17:24:35.522Z -->
 
 You are an expert software engineer. Follow these principles:
 
