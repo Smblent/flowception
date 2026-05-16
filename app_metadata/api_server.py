@@ -111,7 +111,7 @@ class RuleEngineHandler(BaseHTTPRequestHandler):
             )
             _ = self.wfile.write(not_found_payload)
 
-    def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
+    def log_message(self, message_format: str, *args: Any) -> None:
         """Suppress default logging."""
 
 

@@ -40,6 +40,7 @@ def detect_macos_specs() -> dict[str, Any]:
     try:
         result = subprocess.run(
             ["df", "-h", "/"],
+            check=False,
             capture_output=True,
             text=True,
             timeout=5,
@@ -59,6 +60,7 @@ def detect_macos_specs() -> dict[str, Any]:
     try:
         result = subprocess.run(
             ["system_profiler", "SPDisplaysDataType"],
+            check=False,
             capture_output=True,
             text=True,
             timeout=5,

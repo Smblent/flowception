@@ -5,7 +5,7 @@ This script ensures the app_metadata package is on the Python path
 and provides entry points for venv-installed console scripts.
 
 Usage: flowception-app-venv [command] [args...]
-Commands: rule-engine, api-server, profile-generator, test
+Commands: rule-engine, api-server, profile-generator, desktop, build-app, test
 """
 
 from __future__ import annotations
@@ -23,7 +23,11 @@ def main() -> int:
         sys.path.insert(0, str(flowception_root))
 
     if len(sys.argv) < 2:
-        print("Usage: flowception-app-venv [rule-engine|api-server|profile-generator|test] [args...]")
+        print(
+            "Usage: flowception-app-venv "
+            "[rule-engine|api-server|profile-generator|desktop|build-app|test] "
+            "[args...]"
+        )
         return 1
 
     command = sys.argv[1]
@@ -46,6 +50,18 @@ def main() -> int:
 
         sys.argv = ["flowception-profile"] + remaining_args
         return profile_main()
+
+    elif command == "desktop":
+        from app_metadata.desktop_app import main as desktop_main
+
+        sys.argv = ["flowception-desktop"] + remaining_args
+        return desktop_main()
+
+    elif command == "build-app":
+        from app_metadata.build_macos_app import main as build_app_main
+
+        sys.argv = ["flowception-build-app"] + remaining_args
+        return build_app_main()
 
     elif command == "test":
         try:
