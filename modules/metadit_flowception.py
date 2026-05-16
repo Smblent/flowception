@@ -851,7 +851,7 @@ class FlowceptionV1(nn.Module):
         nn.init.normal_(self.t_embedder.mlp[3].weight, std=0.02)
 
         # Zero-out adaLN modulation layers in DiT blocks:
-        for k, block in enumerate(self.blocks):
+        for _k, block in enumerate(self.blocks):
             nn.init.normal_(block.attn.proj.weight, std=0.02)
             nn.init.constant_(block.attn.proj.bias, 0.0)
 

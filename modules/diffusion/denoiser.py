@@ -1,6 +1,7 @@
 import gc
 import math
 from collections import OrderedDict
+from copy import deepcopy
 
 import numpy as np
 import torch
@@ -230,10 +231,7 @@ class Denoiser(nn.Module):
 
         null_cond2 = null_cond
         cond2 = deepcopy(cond) if not self.uncond_gen else deepcopy(null_cond)
-        if self.uncond_gen:
-            cond2 = null_cond2
-        else:
-            cond2 = deepcopy(cond)
+        cond2 = null_cond2 if self.uncond_gen else deepcopy(cond)
 
         if self.enable_cads:
             if isinstance(cond2["class_labels"], torch.Tensor):
@@ -700,10 +698,7 @@ class Denoiser(nn.Module):
 
         null_cond2 = null_cond
         cond2 = deepcopy(cond) if not self.uncond_gen else deepcopy(null_cond)
-        if self.uncond_gen:
-            cond2 = null_cond2
-        else:
-            cond2 = deepcopy(cond)
+        cond2 = null_cond2 if self.uncond_gen else deepcopy(cond)
 
         if self.enable_cads:
             if isinstance(cond2["class_labels"], torch.Tensor):

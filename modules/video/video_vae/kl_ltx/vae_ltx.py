@@ -409,7 +409,7 @@ class LTXVideoDownBlock3D(nn.Module):
     ) -> torch.Tensor:
         r"""Forward method of the `LTXDownBlock3D` class."""
 
-        for i, resnet in enumerate(self.resnets):
+        for _i, resnet in enumerate(self.resnets):
             if torch.is_grad_enabled() and self.gradient_checkpointing:
                 hidden_states = self._gradient_checkpointing_func(resnet, hidden_states, temb, generator)
             else:
@@ -533,7 +533,7 @@ class LTXVideo095DownBlock3D(nn.Module):
     ) -> torch.Tensor:
         r"""Forward method of the `LTXDownBlock3D` class."""
 
-        for i, resnet in enumerate(self.resnets):
+        for _i, resnet in enumerate(self.resnets):
             if torch.is_grad_enabled() and self.gradient_checkpointing:
                 hidden_states = self._gradient_checkpointing_func(resnet, hidden_states, temb, generator)
             else:
@@ -1468,7 +1468,7 @@ class AutoencoderKLLTXVideo(ModelMixin, ConfigMixin, FromOriginalModelMixin):
             t_slices = list(temb.split(1)) if temb is not None else [None] * len(z_slices)
             m_slices = list(latent_mask.split(1)) if latent_mask is not None else [None] * len(z_slices)
             decoded_slices = [
-                self._decode(zb, tb, mb).sample for zb, tb, mb in zip(z_slices, t_slices, m_slices)
+                self._decode(zb, tb, mb).sample for zb, tb, mb in zip(z_slices, t_slices, m_slices, strict=False)
             ]
             decoded = torch.cat(decoded_slices, dim=0)
         else:
@@ -1698,10 +1698,7 @@ class AutoencoderKLLTXVideo(ModelMixin, ConfigMixin, FromOriginalModelMixin):
     ) -> torch.Tensor | torch.Tensor:
         x = sample
         posterior = self.encode(x).latent_dist
-        if sample_posterior:
-            z = posterior.sample(generator=generator)
-        else:
-            z = posterior.mode()
+        z = posterior.sample(generator=generator) if sample_posterior else posterior.mode()
         dec = self.decode(z, temb)
         if not return_dict:
             return (dec.sample,)

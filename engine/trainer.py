@@ -317,7 +317,7 @@ class Trainer:
             )
             # Training iterations.
             t_data_start = time.time()
-            for step, (batch, extra_batch) in enumerate(zip(active_dataloader, extra_dataloader)):
+            for step, (batch, extra_batch) in enumerate(zip(active_dataloader, extra_dataloader, strict=False)):
                 t_data_end = time.time()
                 # Initialize EMA.
                 if self.global_step == self.ema_start:

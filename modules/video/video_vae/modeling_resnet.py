@@ -460,13 +460,8 @@ class TemporalDownsample2x(nn.Module):
         assert hidden_states.shape[1] == self.channels
 
         if self.use_conv and self.padding == 0:
-            if hidden_states.shape[2] == 1:
-                # image
-                pad = (1, 1, 1, 1, 1, 1)
-            else:
-                # video
-                pad = (1, 1, 1, 1, 0, 1)
-
+            # image vs video padding differs on temporal dimension
+            pad = (1, 1, 1, 1, 1, 1) if hidden_states.shape[2] == 1 else (1, 1, 1, 1, 0, 1)
             hidden_states = F.pad(hidden_states, pad, mode="constant", value=0)
 
         hidden_states = self.conv(hidden_states)

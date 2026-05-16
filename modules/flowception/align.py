@@ -91,6 +91,6 @@ def compute_insert_counts(insert_site_mask: torch.Tensor, flow_site_mask: torch.
 def strip(Y, M):
     # Y: [B, L, D], M: [B, L]
     result = []
-    for y, m in zip(Y, M):
+    for y, m in zip(Y, M, strict=False):
         result.append(y[m.bool()])
     return result  # list of [num_frames_i, D]

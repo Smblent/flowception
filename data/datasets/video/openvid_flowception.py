@@ -109,10 +109,7 @@ class OpenVid1MFlowception(Dataset):
             L = min_valid_needed
 
         max_start = total - (L - 1) * s
-        if max_start <= 0:
-            start = 0
-        else:
-            start = int(np.random.randint(0, max_start))
+        start = 0 if max_start <= 0 else int(np.random.randint(0, max_start))
 
         idx_valid = np.arange(start, start + L * s, s, dtype=np.int64)
         frames_valid = reader.get_batch(idx_valid).to(torch.float32)

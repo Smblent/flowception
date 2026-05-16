@@ -174,7 +174,7 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
             nn.init.constant_(m.weight, 1.0)
 
     def _set_gradient_checkpointing(self, module, value=False):
-        if isinstance(module, (Encoder, Decoder)):
+        if isinstance(module, (CausalVaeEncoder, CausalVaeDecoder)):
             module.gradient_checkpointing = value
 
     def enable_tiling(self, use_tiling: bool = True):
@@ -330,7 +330,7 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
         # To chunk the long video
         full_chunk_size = (num_frames - init_window_size) // window_size
         fid = init_window_size
-        for idx in range(full_chunk_size):
+        for _idx in range(full_chunk_size):
             frame_list.append(x[:, :, fid : fid + window_size])
             fid += window_size
 
@@ -363,7 +363,7 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
         # To chunk the long video
         full_chunk_size = (num_frames - init_window_size) // window_size
         fid = init_window_size
-        for idx in range(full_chunk_size):
+        for _idx in range(full_chunk_size):
             frame_list.append(z[:, :, fid : fid + window_size])
             fid += window_size
 
@@ -594,10 +594,7 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
                 global_moments = conv_gather_from_context_parallel_region(moments, dim=2, kernel_size=1)
                 global_posterior = DiagonalGaussianDistribution(global_moments)
 
-            if sample_posterior:
-                z = posterior.sample(generator=generator)
-            else:
-                z = posterior.mode()
+            z = posterior.sample(generator=generator) if sample_posterior else posterior.mode()
 
             if get_context_parallel_rank() == 0:
                 dec = self.decode(z, is_init_image=True).sample
@@ -619,10 +616,7 @@ class CausalVideoVAE(ModelMixin, ConfigMixin):
                     x, is_init_image=is_init_image, temporal_chunk=temporal_chunk
                 ).latent_dist
 
-            if sample_posterior:
-                z = posterior.sample(generator=generator)
-            else:
-                z = posterior.mode()
+            z = posterior.sample(generator=generator) if sample_posterior else posterior.mode()
 
             dec = self.decode(z, is_init_image=is_init_image, temporal_chunk=temporal_chunk).sample
 

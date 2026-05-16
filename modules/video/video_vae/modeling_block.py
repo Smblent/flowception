@@ -308,7 +308,7 @@ class UNetMidBlock2D(nn.Module):
         hidden_states = self.resnets[0](hidden_states, temb)
         t = hidden_states.shape[2]
 
-        for attn, resnet in zip(self.attentions, self.resnets[1:]):
+        for attn, resnet in zip(self.attentions, self.resnets[1:], strict=False):
             if attn is not None:
                 hidden_states = rearrange(hidden_states, "b c t h w -> b t c h w")
                 hidden_states = rearrange(hidden_states, "b t c h w -> (b t) c h w")
@@ -449,7 +449,7 @@ class CausalUNetMidBlock2D(nn.Module):
         )
         t = hidden_states.shape[2]
 
-        for attn, resnet in zip(self.attentions, self.resnets[1:]):
+        for attn, resnet in zip(self.attentions, self.resnets[1:], strict=False):
             if attn is not None:
                 hidden_states = rearrange(hidden_states, "b c t h w -> b t c h w")
                 hidden_states = rearrange(hidden_states, "b t c h w -> (b t) c h w")

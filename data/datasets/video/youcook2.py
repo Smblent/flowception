@@ -240,11 +240,8 @@ class YouCook2Flowception(Dataset):
     def _pick_segment_from_shard(self, idx: int):
         """Map a global dataloader index to this worker's video subset, then pick a random segment within that video."""
         self._setup_worker_shard()
-        if not self._my_entries:
-            # no data; fall back to original list to avoid crashes
-            pool = self.entries
-        else:
-            pool = self._my_entries
+        # no data; fall back to original list to avoid crashes
+        pool = self.entries if not self._my_entries else self._my_entries
 
         # vi = idx % len(pool)                      # stable per worker
         vi = np.random.randint(len(pool))

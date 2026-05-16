@@ -132,11 +132,11 @@ def download_cached_file(url, check_hash=True, progress=False):
 def convert_weights_to_fp16(model: nn.Module):
     """Convert applicable model parameters to fp16"""
 
-    def _convert_weights_to_fp16(l):
-        if isinstance(l, (nn.Conv1d, nn.Conv2d, nn.Conv3d, nn.Linear)):
-            l.weight.data = l.weight.data.to(torch.float16)
-            if l.bias is not None:
-                l.bias.data = l.bias.data.to(torch.float16)
+    def _convert_weights_to_fp16(layer):
+        if isinstance(layer, (nn.Conv1d, nn.Conv2d, nn.Conv3d, nn.Linear)):
+            layer.weight.data = layer.weight.data.to(torch.float16)
+            if layer.bias is not None:
+                layer.bias.data = layer.bias.data.to(torch.float16)
 
     model.apply(_convert_weights_to_fp16)
 
@@ -144,11 +144,11 @@ def convert_weights_to_fp16(model: nn.Module):
 def convert_weights_to_bf16(model: nn.Module):
     """Convert applicable model parameters to fp16"""
 
-    def _convert_weights_to_bf16(l):
-        if isinstance(l, (nn.Conv1d, nn.Conv2d, nn.Conv3d, nn.Linear)):
-            l.weight.data = l.weight.data.to(torch.bfloat16)
-            if l.bias is not None:
-                l.bias.data = l.bias.data.to(torch.bfloat16)
+    def _convert_weights_to_bf16(layer):
+        if isinstance(layer, (nn.Conv1d, nn.Conv2d, nn.Conv3d, nn.Linear)):
+            layer.weight.data = layer.weight.data.to(torch.bfloat16)
+            if layer.bias is not None:
+                layer.bias.data = layer.bias.data.to(torch.bfloat16)
 
     model.apply(_convert_weights_to_bf16)
 
@@ -414,10 +414,7 @@ def retrieve(list_or_dict, key, splitval="/", default=None, expand=True, pass_su
             parent = list_or_dict
 
             try:
-                if isinstance(list_or_dict, dict):
-                    list_or_dict = list_or_dict[key]
-                else:
-                    list_or_dict = list_or_dict[int(key)]
+                list_or_dict = list_or_dict[key] if isinstance(list_or_dict, dict) else list_or_dict[int(key)]
             except (KeyError, IndexError, ValueError) as e:
                 raise KeyNotFoundError(e, keys=keys, visited=visited)
 

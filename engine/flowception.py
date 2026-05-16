@@ -804,10 +804,7 @@ class Flowception(Trainer):
                     img = [sample.pixel_values for sample in samples]
                     img = torch.stack(img)
                     img = img.to(self.accelerator.device, non_blocking=True)
-                    if img.ndim == 4:
-                        img = img[:, :, None]  # img data
-                    else:
-                        img = img[:, :, :1]
+                    img = img[:, :, None] if img.ndim == 4 else img[:, :, :1]  # img data
 
                     anchor_img = img.clone()
 

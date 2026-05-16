@@ -176,9 +176,9 @@ def vanilla_sample_flowception(
             expanded_times[batch_idx, real_frames_pos] = current_t
             expanded_ins_times[batch_idx, real_frames_pos] = insert_time_map
 
-            I = insert_indices_oneh.sum(dim=1)[0]  # number of insertions per batch (same for all)
+            num_ins = insert_indices_oneh.sum(dim=1)[0]  # number of insertions per batch (same for all)
             insert_frames_pos = (
-                insert_indices_oneh.int().topk(I, dim=1).indices.sort(dim=1).values
+                insert_indices_oneh.int().topk(num_ins, dim=1).indices.sort(dim=1).values
             )  # shape [B, I]
 
             expanded_frames[batch_idx, insert_frames_pos, :, :, :] = inserting_frames
@@ -389,9 +389,9 @@ def vanilla_sample_noisy_flowception(
             expanded_times[batch_idx, real_frames_pos] = current_t
             expanded_ins_times[batch_idx, real_frames_pos] = insert_time_map
 
-            I = insert_indices_oneh.sum(dim=1)[0]  # number of insertions per batch (same for all)
+            num_ins = insert_indices_oneh.sum(dim=1)[0]  # number of insertions per batch (same for all)
             insert_frames_pos = (
-                insert_indices_oneh.int().topk(I, dim=1).indices.sort(dim=1).values
+                insert_indices_oneh.int().topk(num_ins, dim=1).indices.sort(dim=1).values
             )  # shape [B, I]
 
             expanded_frames[batch_idx, insert_frames_pos, :, :, :] = inserting_frames
@@ -898,9 +898,9 @@ def vanilla_sample_flowception_prescribed(
             expanded_times[batch_idx, real_frames_pos] = current_t
             expanded_ins_times[batch_idx, real_frames_pos] = insert_time_map
 
-            I = insert_indices_oneh.sum(dim=1)[0]  # number of insertions per batch (same for all)
+            num_ins = insert_indices_oneh.sum(dim=1)[0]  # number of insertions per batch (same for all)
             insert_frames_pos = (
-                insert_indices_oneh.int().topk(I, dim=1).indices.sort(dim=1).values
+                insert_indices_oneh.int().topk(num_ins, dim=1).indices.sort(dim=1).values
             )  # shape [B, I]
 
             expanded_frames[batch_idx, insert_frames_pos, :, :, :] = inserting_frames
@@ -1039,7 +1039,7 @@ def vanilla_sample_interp_flowception(
                 torch.zeros_like(velocity_pred),
                 torch.zeros_like(lambda_ins_pred),
             )
-            for nu in range(num_uncond):
+            for _nu in range(num_uncond):
                 t_new = (t - s_offset * torch.rand((1,), device=t.device)).clip(0, 1)
                 t_uncond = torch.where(t == 1, t, t_new)
                 t_ratio = (t_uncond / t.clip(1e-4, None))[:, :, None, None, None].to(Y_t.dtype)
@@ -1160,8 +1160,8 @@ def vanilla_sample_interp_flowception(
             expanded_ins_times[bidx, real_pos] = insert_time_map
             expanded_fixed_ctx[bidx, real_pos] = fixed_ctx_mask  # propagate anchors
 
-            I = insert_indices_oneh.sum(dim=1)[0]
-            insert_frames_pos = insert_indices_oneh.int().topk(I, dim=1).indices.sort(dim=1).values
+            num_ins = insert_indices_oneh.sum(dim=1)[0]
+            insert_frames_pos = insert_indices_oneh.int().topk(num_ins, dim=1).indices.sort(dim=1).values
 
             expanded_frames[bidx, insert_frames_pos] = inserting_frames
             expanded_mask[bidx, insert_frames_pos] = inserting_mask

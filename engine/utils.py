@@ -322,10 +322,10 @@ class GPUBatchVideoAug:
                 sinh = torch.sin(h).view(B, 1, 1, 1)
                 R, G, Bc = y[:, 0], y[:, 1], y[:, 2]
                 Yl = 0.299 * R + 0.587 * G + 0.114 * Bc
-                I = 0.596 * R - 0.274 * G - 0.322 * Bc
+                i_ch = 0.596 * R - 0.274 * G - 0.322 * Bc
                 Q = 0.211 * R - 0.523 * G + 0.312 * Bc
-                I2 = I * cosh - Q * sinh
-                Q2 = I * sinh + Q * cosh
+                I2 = i_ch * cosh - Q * sinh
+                Q2 = i_ch * sinh + Q * cosh
                 R2 = Yl + 0.956 * I2 + 0.621 * Q2
                 G2 = Yl - 0.272 * I2 - 0.647 * Q2
                 B2 = Yl - 1.106 * I2 + 1.703 * Q2
